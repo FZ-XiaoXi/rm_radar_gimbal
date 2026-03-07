@@ -26,10 +26,11 @@ typedef struct{
     float pitch;
 }tempdata_t;
 
-tempdata_t temp_data;
+static tempdata_t temp_data;
 
 
-void Gimbal_task(void){
+void Gimbal_task(void const * argument){
+	HAL_GPIO_WritePin(laser_GPIO_Port, laser_Pin, GPIO_PIN_SET);	//TODO TEST
 	g_xSemTicks=xSemaphoreCreateBinary( );
     //等待陀螺仪任务更新陀螺仪数据
     //wait a time
@@ -38,8 +39,7 @@ void Gimbal_task(void){
     while (1)
     {
 
-      gimbal_control.Ctl_mode=1;  //云台远程操控模式   0 为视觉自动模式  1为遥控器模式
-      
+      gimbal_control.Ctl_mode=0;  //云台远程操控模式   0 为视觉自动模式  1为遥控器模式
 
       if (gimbal_control.Ctl_mode==1)//远程操控模式
 		  {
@@ -53,12 +53,17 @@ void Gimbal_task(void){
             //以absolute_angle_set为目标值，absolute_angle为当前值，进行pid串级环的运算，并将值存到motor_ready[]结构体中
             Motor_Calc(&gimbal_control);
        }
-
        else if (gimbal_control.Ctl_mode==0)//视觉自动模式//todo当锁定无人机发射激光
        {
-           temp_data.yaw=msp(aim_packet_from_nuc.yaw,-pi,pi,-180,180);
-           temp_data.pitch=msp(aim_packet_from_nuc.pitch,-pi,pi,-90,90);
-
+					temp_data.yaw=msp(aim_packet_from_nuc.yaw,-pi,pi,-180,180);
+					temp_data.pitch=msp(aim_packet_from_nuc.pitch,-pi,pi,-180,180);
+          aim_packet_from_nuc.yaw=0;
+				 aim_packet_from_nuc.pitch=0;
+//          if(gimbal_control.gimbal_rc_ctrl->rc.s[0]==1)
+//						HAL_GPIO_WritePin(laser_GPIO_Port, laser_Pin, GPIO_PIN_SET);
+//					else
+//						HAL_GPIO_WritePin(laser_GPIO_Port, laser_Pin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(laser_GPIO_Port, laser_Pin, GPIO_PIN_SET);	//TODO TEST
           gimbal_detact_calibration(&gimbal_control);
           gimbal_feedback_update(&gimbal_control,&temp_data.yaw,&temp_data.pitch,gimbal_control.Ctl_mode);
           gimbal_set_tar(&gimbal_control,&temp_data.yaw,&temp_data.pitch);
@@ -104,27 +109,26 @@ static void gimbal_feedback_update(gimbal_control_t *feedback_update,float *add_
     feedback_update->gimbal_yaw_motor.absolute_angle=INS.Yaw;
 
     if(Crtl_mode==1)//更新遥控器实时角度
-	{
+	  {
 
-    feedback_update->gimbal_rc_ctrl=get_remote_control_point();
-    //获取遥控器输入值并映射为目标角度值
-	  *add_yaw=-msp(feedback_update->gimbal_rc_ctrl->rc.ch[2],-660,660,-180,180);//待修改
-    *add_pitch=-msp(feedback_update->gimbal_rc_ctrl->rc.ch[3],-660,660,-90,90);		
-		
-    feedback_update->gimbal_pitch_motor.absolute_angle_set=*add_pitch;
-    feedback_update->gimbal_yaw_motor.absolute_angle_set=*add_yaw;
+      feedback_update->gimbal_rc_ctrl=get_remote_control_point();
+      //获取遥控器输入值并映射为目标角度值
+      *add_yaw=-msp(feedback_update->gimbal_rc_ctrl->rc.ch[2],-660,660,-180,180);//待修改
+      *add_pitch=-msp(feedback_update->gimbal_rc_ctrl->rc.ch[3],-660,660,-90,90);		
+      
+      feedback_update->gimbal_pitch_motor.absolute_angle_set=*add_pitch;
+      feedback_update->gimbal_yaw_motor.absolute_angle_set=*add_yaw;
 
-      }
-
+    }
     else if(Crtl_mode==0)//更新视觉控制实时角度
     {
-    //更新电机目标机械角度
+      //更新电机目标机械角度
+    
+      feedback_update->gimbal_pitch_motor.absolute_angle_set=temp_data.pitch+feedback_update->gimbal_pitch_motor.absolute_angle_set;
+      feedback_update->gimbal_yaw_motor.absolute_angle_set=temp_data.yaw+feedback_update->gimbal_yaw_motor.absolute_angle_set;
+			
 
-   
-    feedback_update->gimbal_pitch_motor.absolute_angle_set=temp_data.pitch;
-    feedback_update->gimbal_yaw_motor.absolute_angle_set=temp_data.yaw;
-
-    xSemaphoreGive(g_xSemVPC);
+      xSemaphoreGive(g_xSemVPC);
     } 
 		vTaskDelay(5);
 
@@ -136,7 +140,6 @@ void gimbal_detact_calibration(gimbal_control_t *gimbal_motort){
     
     //添加标志位判断有无执行过归中，如果有，则不再归中
     while(GIMBAL_GET_FLAG(GIMBAL_OFFSET_FLAG)){
-        
         static uint16_t int_time=0;
         static uint16_t int_stop_time=0;
         gimbal_motort->gimbal_pitch_motor.motor_gyro=motor_data[1].angle;
@@ -144,7 +147,6 @@ void gimbal_detact_calibration(gimbal_control_t *gimbal_motort){
         MotorSetTar(&motor_ready[0],YAW_OFFSET_ECD, ABS);  
         MotorSetTar(&motor_ready[1], PITCH_OFFSET_ECD, ABS);
 				Motor_return(gimbal_motort);
-		
        int_time++;
        if((fabs(gimbal_motort->gimbal_yaw_motor.motor_gyro-YAW_OFFSET_ECD)<GIMBAL_INIT_ANGLE_ERROR)||
 				(fabs(gimbal_motort->gimbal_pitch_motor.motor_gyro-PITCH_OFFSET_ECD))<GIMBAL_INIT_ANGLE_ERROR){
@@ -166,16 +168,13 @@ void gimbal_detact_calibration(gimbal_control_t *gimbal_motort){
 					//reset_pid_integrals(&gimbal_pitch_speed_pid);
           MotorSetTar(&motor_ready[MOTOR_YAW],motor_data[MOTOR_YAW].angle, ABS);
           MotorSetTar(&motor_ready[MOTOR_PITCH],motor_data[MOTOR_PITCH].angle, ABS);			
-            //信号量释放
-            xSemaphoreGive(g_xSemTicks);
-            int_stop_time = 0;
-            int_time = 0;
-            GIMBAL_FLAG_RESET(GIMBAL_OFFSET_FLAG);
-           }
-       
+          //信号量释放
+          xSemaphoreGive(g_xSemTicks);
+          int_stop_time = 0;
+          int_time = 0;
+          GIMBAL_FLAG_RESET(GIMBAL_OFFSET_FLAG);
+        }
     }
-
-
 }
 
 

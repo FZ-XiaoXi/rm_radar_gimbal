@@ -20,9 +20,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
-#include "Serial.h"
-/* USER CODE BEGIN INCLUDE */
 
+/* USER CODE BEGIN INCLUDE */
+#include "Serial.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/

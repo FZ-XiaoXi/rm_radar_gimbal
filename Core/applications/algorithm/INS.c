@@ -102,7 +102,7 @@ const float gravity[3] = {0, 0, 9.81f};
 int stop_time;
 float ins_time = 0.0f;
 
-void INS_Calculate(void)
+void INS_Calculate(void const * argument)
 {
 	INS_Init( );
 	static uint32_t count = 0;

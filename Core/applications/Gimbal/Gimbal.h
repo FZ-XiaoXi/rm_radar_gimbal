@@ -14,7 +14,7 @@
 #define HALF_ECD_RANGE  4096
 #define ECD_RANGE       8191
 #define PITCH_OFFSET_ECD 4129 //pitch轴中值   
-#define YAW_OFFSET_ECD  2700  //yaw轴中值       
+#define YAW_OFFSET_ECD  3383  //yaw轴中值       
 //电机限幅机械角度
 #define YAW_Limit_Low -90
 #define YAW_Limit_Hight 90
@@ -138,7 +138,7 @@ typedef struct
   * @param[in]      pvParameters: 空
   * @retval         none
   */
- extern void Gimbal_task(void);
+ extern void Gimbal_task(void const * argument);
 
 static void gimbal_feedback_update(gimbal_control_t *feedback_update,float *add_yaw,float *add_pitch,uint8_t Crtl_mode);
 // 先声明函数（告诉编译器函数的签名）

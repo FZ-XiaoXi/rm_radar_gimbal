@@ -65,14 +65,12 @@ osThreadId IMU_slovingHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
 extern void Can_Send(void const * argument);
-extern void Gimbal_task(void);
-extern void INS_Calculate(void);
-extern void VPC_Task(void * argument);
+extern void Gimbal_task(void const * argument);
+extern void INS_Calculate(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -140,13 +138,14 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of IMU_sloving */
   osThreadDef(IMU_sloving, INS_Calculate, osPriorityLow, 0, 128);
   IMU_slovingHandle = osThreadCreate(osThread(IMU_sloving), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
 	
 	/* definition and creation of VPC_sloving */
   osThreadDef(VPC_sloving, VPC_Task, osPriorityLow, 0, 128);
   VPCHandle = osThreadCreate(osThread(VPC_sloving), NULL);
-
-  /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+	
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -166,14 +165,14 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(100);
+    //uint8_t s[100] = {0xff,0x66,0x88,0,0,0};
+    //CDC_SendFeed(s, 4);
   }
+				
   /* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-
-
-
 /* USER CODE END Application */

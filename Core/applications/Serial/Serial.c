@@ -18,7 +18,7 @@
 
 /* extern semaphore defined in freertos.c */
 extern SemaphoreHandle_t g_xSemVPC;
-
+uint8_t rx_buffer[RX_BUFFER_SIZE] = {0};
 
 receive_packet_t aim_packet_from_nuc;
 send_packet_t aim_packet_to_nuc;
@@ -66,8 +66,14 @@ const uint16_t CRC_Data[256]={ /* CRC 字节余式表 */
   */
 int CDC_SendFeed(uint8_t* Fed, uint16_t Len)
 {
-	CDC_Transmit_FS(Fed, Len);
-	return 0;
+  if (HAL_UART_Transmit_DMA(&huart1, Fed, Len) != HAL_OK)
+  {
+    // 发送失败处理
+    return -1;
+  }
+  return 0;
+	//CDC_Transmit_FS(Fed, Len);
+	//return 0;
 }
 
 /**
@@ -80,26 +86,32 @@ int CDC_SendFeed(uint8_t* Fed, uint16_t Len)
   */
 void UnPack_Data_ROS2(uint8_t *receive_buf,receive_packet_t *receive_packet,uint16_t Len)
 {
-    if(receive_buf[0] == 0xA5)
+  if(receive_buf[0] == 0xA5)
+  {
+    uint16_t w_expected;
+	  w_expected=Get_CRC16_Check_Sum(receive_buf,Len-2,0xFFFF);
+    if((w_expected & 0xff) == receive_buf[Len - 2] && ((w_expected >> 8) & 0xff) == receive_buf[Len - 1])
     {
-        uint16_t w_expected;
-	    w_expected=Get_CRC16_Check_Sum(receive_buf,Len-2,0xFFFF);
-        if((w_expected & 0xff) == receive_buf[Len - 2] && ((w_expected >> 8) & 0xff) == receive_buf[Len - 1])
-        {
-            memcpy(receive_packet,receive_buf, Len);
+			
+      memcpy(receive_packet,receive_buf, Len);
       /* notify VPC task that a validated packet is ready */
+			
       if (g_xSemVPC != NULL) {
+				
         if (__get_IPSR() != 0) {
+					
           BaseType_t xHigherPriorityTaskWoken = pdFALSE;
           xSemaphoreGiveFromISR(g_xSemVPC, &xHigherPriorityTaskWoken);
           portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         } else {
+					
           xSemaphoreGive(g_xSemVPC);
         }
       }
-        }
+    }
+		
 	}
-    memset(receive_buf,0,Len);
+  memset(receive_buf,0,Len);
 }
 
 
@@ -112,7 +124,7 @@ void UnPack_Data_ROS2(uint8_t *receive_buf,receive_packet_t *receive_packet,uint
   */
 void Pack_And_Send_Data_ROS2(send_packet_t *send_packet)
 {
-
+		
     uint16_t len =sizeof (send_packet_t);
     uint8_t tmp[len];
     memcpy(tmp, send_packet,len-2);
@@ -120,7 +132,7 @@ void Pack_And_Send_Data_ROS2(send_packet_t *send_packet)
 
     tmp[len - 2] = (uint8_t) (w_crc & 0x00ff);
     tmp[len - 1] = (uint8_t) ((w_crc >> 8) & 0x00ff);
-	CDC_SendFeed(tmp, len);
+	  CDC_SendFeed(tmp, len);
 }
 
 /**

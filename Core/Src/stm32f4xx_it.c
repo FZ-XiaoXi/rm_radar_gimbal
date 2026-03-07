@@ -22,8 +22,13 @@
 #include "stm32f4xx_it.h"
 #include "FreeRTOS.h"
 #include "task.h"
+          // 包含 UART 句柄等（可选）
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "queue.h"
+#include "string.h"
+#include "Serial.h"           // 包含 receive_packet_t 定义
+#include "usart.h"  
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +48,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern QueueHandle_t uart_rx_queue;           // 用于传递接收数据的队列
+extern uint8_t rx_buffer[];                    // DMA 接收缓冲区（需在其它文件定义）
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,8 +66,11 @@
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern CAN_HandleTypeDef hcan1;
 extern TIM_HandleTypeDef htim2;
+extern DMA_HandleTypeDef hdma_usart1_rx;
+extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart3_rx;
 extern DMA_HandleTypeDef hdma_usart6_tx;
+extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
 
@@ -258,6 +267,60 @@ void TIM2_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles USART1 global interrupt.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+  // uint32_t isrflags = READ_REG(huart1.Instance->SR);   // 读取状态寄存器
+  
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+  // // 空闲中断处理
+  // if ((isrflags & USART_SR_IDLE) != RESET)
+  // {
+  //   __HAL_UART_CLEAR_IDLEFLAG(&huart1);   // 清除空闲标志
+
+  //   HAL_UART_DMAStop(&huart1);  // 停止 DMA 接收，防止数据覆盖
+
+  //   // 计算实际接收到的字节数
+  //   uint32_t remaining = __HAL_DMA_GET_COUNTER(&hdma_usart1_rx);
+  //   uint32_t received = RX_BUFFER_SIZE - remaining;
+
+  //   // 如果接收到至少一个完整包（根据协议调整判断条件）
+  //   if (received >= sizeof(receive_packet_t))
+  //   {
+  //     // 从缓冲区复制一帧数据（假设包不跨边界，简单处理）
+  //     uint8_t temp[sizeof(receive_packet_t)];
+  //     memcpy(temp, rx_buffer, sizeof(receive_packet_t));
+
+  //     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  //     xQueueSendFromISR(uart_rx_queue, temp, &xHigherPriorityTaskWoken);
+  //     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  //   }
+
+  //   // 重新启动 DMA 接收
+  //   HAL_UART_Receive_DMA(&huart1, rx_buffer, RX_BUFFER_SIZE);
+  // }
+  /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 stream2 global interrupt.
+  */
+void DMA2_Stream2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream2_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA2_Stream2_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream2_IRQn 1 */
+}
+
+/**
   * @brief This function handles USB On The Go FS global interrupt.
   */
 void OTG_FS_IRQHandler(void)
@@ -286,6 +349,20 @@ void DMA2_Stream6_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA2 stream7 global interrupt.
+  */
+void DMA2_Stream7_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream7_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream7_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_tx);
+  /* USER CODE BEGIN DMA2_Stream7_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream7_IRQn 1 */
+}
+
+/**
   * @brief This function handles USART6 global interrupt.
   */
 void USART6_IRQHandler(void)
@@ -300,5 +377,24 @@ void USART6_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+    if (huart->Instance == USART1)
+    {
+      //uint8_t RX[256]={0};
+      //sprintf(RX,"Received %d bytes\r\n", Size);
+      //HAL_UART_Transmit_DMA(&huart1, RX, strlen((char*)RX));
+        uint32_t copyLen = (Size > sizeof(buf_receive_from_nuc)) ? sizeof(buf_receive_from_nuc) : Size;
+        memcpy(buf_receive_from_nuc, rx_buffer, copyLen);
+				HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rx_buffer, sizeof(rx_buffer));
+				__HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
+        // /* Call UnPack which performs CRC check and will notify VPC (uses FromISR when appropriate) */
+        UnPack_Data_ROS2(buf_receive_from_nuc, &aim_packet_from_nuc, (uint16_t)copyLen);
+        // 使用DMA将接收到的数据发送回去 TEST
+        //HAL_UART_Transmit_DMA(&huart1, rx_buffer, Size);
+        // 重新启动接收，使用Ex函数，接收不定长数据
+        // 关闭DMA传输过半中断（HAL库默认开启，但我们只需要接收完成中断）
+        
+    }
+}
 /* USER CODE END 1 */

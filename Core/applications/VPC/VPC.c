@@ -8,8 +8,11 @@
   if (g_xSemVPC == NULL) {
     /* semaphore not ready yet; avoid calling null handle */
     vTaskDelay(pdMS_TO_TICKS(10));
+		 
     return;
   }
+	//HAL_GPIO_TogglePin(laser_GPIO_Port,laser_Pin);
+	
   xSemaphoreTake(g_xSemVPC, portMAX_DELAY);
 
   /* Serial already copied validated frame into aim_packet_from_nuc in UnPack_Data_ROS2 */
@@ -37,6 +40,10 @@ void VPC_Init(void)
    {
     /* Block until a valid packet arrives, then send an updated response */
     VPC_Receive();
+		
+		aim_packet_to_nuc.timestamp = HAL_GetTick();
+		aim_packet_to_nuc.aim_x = HAL_GetTick();
+		aim_packet_to_nuc.aim_y = HAL_GetTick();
     Pack_And_Send_Data_ROS2(&aim_packet_to_nuc);
     /* small yield to allow lower priority work; avoid busy-looping */
     vTaskDelay(pdMS_TO_TICKS(1));

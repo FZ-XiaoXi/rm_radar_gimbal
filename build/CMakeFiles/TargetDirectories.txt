@@ -1,3 +1,0 @@
-E:/RM/gimbal_cooperations/build/CMakeFiles/ALL_BUILD.dir
-E:/RM/gimbal_cooperations/build/CMakeFiles/ZERO_CHECK.dir
-E:/RM/gimbal_cooperations/build/Source/CMakeFiles/cmsis-nn.dir

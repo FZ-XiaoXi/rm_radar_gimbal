@@ -13,7 +13,8 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdint.h"
-
+#include "usart.h"
+#define RX_BUFFER_SIZE 512
 //下面是为和ROS2上位机沟通而定制的结构体(zy)
  typedef struct
  {
@@ -39,7 +40,7 @@
 typedef struct
 {
   uint8_t header;//0xA5
-  uint8_t state : 2;       // 0-untracking 1-tracking-aim 2-tracking-buff
+  uint8_t state : 2;       // 0-untracking 1-tracking-aim
   uint8_t id : 3;          // aim: 0-outpost 6-guard 7-base
   uint8_t armors_num : 3;  // 2-balance 3-outpost 4-normal
 
@@ -54,6 +55,7 @@ typedef struct
   uint16_t checksum ;
 } __attribute__((packed)) receive_packet_t;
 
+extern uint8_t rx_buffer[RX_BUFFER_SIZE];
 
 extern receive_packet_t aim_packet_from_nuc;
 extern send_packet_t aim_packet_to_nuc;

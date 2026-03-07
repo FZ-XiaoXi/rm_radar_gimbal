@@ -96,7 +96,7 @@ extern void INS_Data_Update(void);
 
 extern void INS_Init(void);
 
-extern void INS_Calculate(void);
+extern void INS_Calculate(void const * argument);
 
 // extern IMU_Data_t imu_data;
 			void IMU_Temperature_Ctrl(void);
