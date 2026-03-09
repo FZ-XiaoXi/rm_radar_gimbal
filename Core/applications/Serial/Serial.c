@@ -7,10 +7,12 @@
  *
  */
 #include "Serial.h"
+#include "gimbal.h"
 #include "stm32f4xx_hal.h"
 #include "usbd_cdc_if.h"
 #include "string.h"
 #include "imu.h"
+#include "pid.h"
 /* FreeRTOS for semaphore notify */
 #include "FreeRTOS.h"
 #include "semphr.h"
@@ -166,4 +168,25 @@ void Send_Packet_Init(send_packet_t *send_packet)
      send_packet-> yaw = imu_Angle.Yaw;
 }
 
+void setPID(uint8_t* buf){
+	extern gimbal_control_t gimbal_control;
+	to_stm_pid_packet_t s;
+	memcpy(&s, buf, sizeof(to_stm_pid_packet_t));
+	if(s.header != 0xAC){
+		return;
+	}
+	gimbal_yaw_speed_pid.kp = s.yaw_speed_p;
+	gimbal_yaw_speed_pid.ki = s.yaw_speed_i;
+	gimbal_yaw_speed_pid.kd = s.yaw_speed_d;
+	gimbal_yaw_angle_pid.kp = s.yaw_angle_p;
+	gimbal_yaw_angle_pid.ki = s.yaw_angle_i;
+	gimbal_yaw_angle_pid.kd = s.yaw_angle_d;
+	gimbal_pitch_speed_pid.kp = s.pitch_speed_p;
+	gimbal_pitch_speed_pid.ki = s.pitch_speed_i;
+	gimbal_pitch_speed_pid.kd = s.pitch_speed_d;
+	gimbal_pitch_angle_pid.kp = s.pitch_angle_p;
+	gimbal_pitch_angle_pid.ki = s.pitch_angle_i;
+	gimbal_pitch_angle_pid.kd = s.pitch_angle_d;
+	gimbal_control.vision_ctrl_mode = s.mode;
+}
 

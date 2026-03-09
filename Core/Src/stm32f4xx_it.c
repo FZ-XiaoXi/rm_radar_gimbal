@@ -379,17 +379,26 @@ void USART6_IRQHandler(void)
 /* USER CODE BEGIN 1 */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
+		extern void setPID(uint8_t* buf);
     if (huart->Instance == USART1)
     {
       //uint8_t RX[256]={0};
       //sprintf(RX,"Received %d bytes\r\n", Size);
       //HAL_UART_Transmit_DMA(&huart1, RX, strlen((char*)RX));
-        uint32_t copyLen = (Size > sizeof(buf_receive_from_nuc)) ? sizeof(buf_receive_from_nuc) : Size;
+			if(*rx_buffer == 0xAC){
+				setPID(rx_buffer);
+				memset(rx_buffer, 0, RX_BUFFER_SIZE);
+				HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rx_buffer, sizeof(rx_buffer));
+				__HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
+			}else{
+				uint32_t copyLen = (Size > sizeof(buf_receive_from_nuc)) ? sizeof(buf_receive_from_nuc) : Size;
         memcpy(buf_receive_from_nuc, rx_buffer, copyLen);
 				HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rx_buffer, sizeof(rx_buffer));
 				__HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
         // /* Call UnPack which performs CRC check and will notify VPC (uses FromISR when appropriate) */
         UnPack_Data_ROS2(buf_receive_from_nuc, &aim_packet_from_nuc, (uint16_t)copyLen);
+			}
+        
         // 使用DMA将接收到的数据发送回去 TEST
         //HAL_UART_Transmit_DMA(&huart1, rx_buffer, Size);
         // 重新启动接收，使用Ex函数，接收不定长数据

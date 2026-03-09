@@ -79,4 +79,22 @@ extern receive_packet_t   aim_packet_from_nuc;
 extern send_packet_t      aim_packet_to_nuc;
 extern uint8_t buf_receive_from_nuc[sizeof(receive_packet_t)];
 
+typedef struct
+{
+    uint8_t header;                 // 固定为 0xAC
+    int mode;
+    float yaw_angle_p;
+    float yaw_angle_i;
+    float yaw_angle_d;
+    float pitch_angle_p;
+    float pitch_angle_i;
+    float pitch_angle_d;
+    float yaw_speed_p;
+    float yaw_speed_i;
+    float yaw_speed_d;
+    float pitch_speed_p;
+    float pitch_speed_i;
+    float pitch_speed_d;
+} __attribute__((packed)) to_stm_pid_packet_t;
+
 #endif

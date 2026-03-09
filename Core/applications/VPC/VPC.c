@@ -1,6 +1,7 @@
 #include "VPC.h"
-
-
+#include "motor.h"
+#include "gimbal.h"
+#include "pid.h"
 
  void VPC_Receive(void)
  {
@@ -40,10 +41,12 @@ void VPC_Init(void)
    {
     /* Block until a valid packet arrives, then send an updated response */
     VPC_Receive();
-		
+		extern gimbal_control_t gimbal_control;
 		aim_packet_to_nuc.timestamp = HAL_GetTick();
-		aim_packet_to_nuc.aim_x = HAL_GetTick();
-		aim_packet_to_nuc.aim_y = HAL_GetTick();
+		aim_packet_to_nuc.aim_x = motor_data[MOTOR_YAW].speed;
+
+		aim_packet_to_nuc.aim_y = gimbal_control.gimbal_yaw_motor.motor_speed_set;
+		aim_packet_to_nuc.aim_z = gimbal_control.vision_ctrl_mode;
     Pack_And_Send_Data_ROS2(&aim_packet_to_nuc);
     /* small yield to allow lower priority work; avoid busy-looping */
     vTaskDelay(pdMS_TO_TICKS(1));

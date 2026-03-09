@@ -77,50 +77,56 @@ float pid_calc_speed(pid_struct_t *pid, float tar, float real)//PID运算函数
   pid->err[1] = pid->err[0];
 
 
-  // LIMIT_MIN_MAX(pid->i_out, -pid->i_max, pid->i_max);
-
-  if(pid->i_out>=3000){
-  	  pid->i_out=3000;
-    }else if(pid->i_out<=-3000){
-  	  pid->i_out=-3000;
-    }
+  LIMIT_MIN_MAX(pid->i_out, -pid->i_max, pid->i_max);
 	pid->output = pid->p_out + pid->i_out + pid->d_out;
-  // LIMIT_MIN_MAX(pid->output, -pid->out_max, pid->out_max);
-		if(pid->output>=5000){
-	  pid->output=5000;
-  }else if(pid->output<=-5000){
-	  pid->output=-5000;
-  }
+  LIMIT_MIN_MAX(pid->output, -pid->out_max, pid->out_max);
   return pid->output;
 }
                                          //目标      //实际
 float pid_calc_raw(pid_struct_t *pid, float tar, float real)//PID运算函数
 {
-  pid->ref = tar;
-  pid->fdb = real;
+		pid->err[0] = tar-real;
+	pid->p_out = pid->kp * pid->err[0];
+	float i_separation_threshold = 0.1f;
+	
+	if(fabs(pid->err[0]) < i_separation_threshold){
+		pid->i_out += pid->ki * pid->err[0];
+		
+	}else{
+		pid->i_out=0.0f;
+	}
+	LIMIT_MIN_MAX(pid->i_out, -pid->i_max, pid->i_max);
+	pid->d_out = pid->kd * (pid->err[0] - pid->err[1]);
+	pid->err[1] = pid->err[0];
+	
+	pid->output = pid->p_out + pid->i_out + pid->d_out;
+	LIMIT_MIN_MAX(pid->output, -pid->out_max, pid->out_max);
+	return pid->output;
+//  pid->ref = tar;
+//  pid->fdb = real;
 
-  pid->err[0] = rad_format_limit(pid->ref, pid->fdb);
+//  pid->err[0] = rad_format_limit(pid->ref, pid->fdb);
 
 
-  pid->p_out  = pid->kp * pid->err[0];
-  pid->i_out += pid->ki * pid->err[0];
-  pid->d_out  = pid->kd * (pid->err[0] - pid->err[1]);
-  pid->err[1] = pid->err[0];
+//  pid->p_out  = pid->kp * pid->err[0];
+//  pid->i_out += pid->ki * pid->err[0];
+//  pid->d_out  = pid->kd * (pid->err[0] - pid->err[1]);
+//  pid->err[1] = pid->err[0];
 
-  // LIMIT_MIN_MAX(pid->i_out, -pid->i_max, pid->i_max);
-  if(pid->i_out>=3000){
-  	  pid->i_out=3000;
-    }else if(pid->i_out<=-3000){
-  	  pid->i_out=-3000;
-    }
-  pid->output = pid->p_out + pid->i_out + pid->d_out;
-  // LIMIT_MIN_MAX(pid->output, -pid->out_max, pid->out_max);
-  if(pid->output>=5000){
-	  pid->output=5000;
-  }else if(pid->output<=-5000){
-	  pid->output=-5000;
-  }
-  return pid->output;
+//  // LIMIT_MIN_MAX(pid->i_out, -pid->i_max, pid->i_max);
+//  if(pid->i_out>=3000){
+//  	  pid->i_out=3000;
+//    }else if(pid->i_out<=-3000){
+//  	  pid->i_out=-3000;
+//    }
+//  pid->output = pid->p_out + pid->i_out + pid->d_out;
+//  // LIMIT_MIN_MAX(pid->output, -pid->out_max, pid->out_max);
+//  if(pid->output>=5000){
+//	  pid->output=5000;
+//  }else if(pid->output<=-5000){
+//	  pid->output=-5000;
+//  }
+//  return pid->output;
 }
 
                                          //目标      //实际
@@ -158,15 +164,15 @@ float pid_calc_raw_return(pid_struct_t *pid, float tar, float real)//PID运算�
 void gimbal_PID_init()//角度环和速度环的PID初始化,只是初测出来的数据，具体还需要测试
 {
 	//YAW轴初始化
-	pid_init(&gimbal_yaw_speed_pid, 150, 0.01, 0, 1000, 1000);//P=30,I=0,D=0
-	pid_init(&gimbal_yaw_angle_pid, 180, 0, 0.05,100, 1000);//P=500,I=0,D=1
-  pid_init(&gimbal_yaw_speed_pid_return, 200,0.06,0.003, 1000, 1000);//P=30,I=0,D=0`
-  pid_init(&gimbal_yaw_angle_pid_return, 50,0,0.005,100, 1000);//P=500,I=0,D=1
+	pid_init(&gimbal_yaw_speed_pid, 150, 10, 5, 1000, 1000);//P=30,I=0,D=0
+	pid_init(&gimbal_yaw_angle_pid,100, 0.05, 1, 1000, 10000);//P=500,I=0,D=1
+  pid_init(&gimbal_yaw_speed_pid_return, 30,0.06,0.003, 1000, 1000);//P=30,I=0,D=0`
+  pid_init(&gimbal_yaw_angle_pid_return, 120,0,0.005,100, 1000);//P=500,I=0,D=1
 	//PITCH轴初始化
 	//pid_init(&gimbal_pitch_speed_pid,150,0,0, 1000, 1000);//P=30,I=0,D=0
 	//pid_init(&gimbal_pitch_angle_pid,0,0,0,100, 1000);//P=500,I=0,D=1
-	pid_init(&gimbal_pitch_speed_pid,30,0.01,1, 1000, 1000);//P=30,I=0,D=0
-	pid_init(&gimbal_pitch_angle_pid,800,0.05,1,100, 1000);//P=500,I=0,D=1//1800,0.1,1
+	pid_init(&gimbal_pitch_speed_pid, 135,6,5, 1000, 1000);//P=30,I=0,D=0
+	pid_init(&gimbal_pitch_angle_pid,100,2,0.05, 1000, 10000);//P=500,I=0,D=1//1800,0.1,1
   pid_init(&gimbal_pitch_speed_pid_return, 16,0.005,0, 1000, 1000);//P=30,I=0,D=0`
-  pid_init(&gimbal_pitch_angle_pid_return, 300,0,0.01,100, 1000);//P=500,I=0,D=1
+  pid_init(&gimbal_pitch_angle_pid_return, 400,0,0.01,100, 1000);//P=500,I=0,D=1
 }

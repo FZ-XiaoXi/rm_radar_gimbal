@@ -84,7 +84,7 @@ typedef struct
 //    const motor_measure_t *gimbal_motor_measure;
     gimbal_PID_t gimbal_motor_absolute_angle_pid;
     gimbal_PID_t gimbal_motor_relative_angle_pid;
-
+		
     uint16_t offset_ecd;
     fp32 max_relative_angle; //rad
     fp32 min_relative_angle; //rad
@@ -99,6 +99,8 @@ typedef struct
     fp32 raw_cmd_current;
     fp32 current_set;
     int16_t given_current;
+	
+		fp32 motor_speed_set;
 
 } gimbal_motor_t;
 
@@ -118,6 +120,8 @@ typedef struct
 
 typedef struct
 {
+		int vision_ctrl_mode;
+		
     uint8_t Ctl_mode;
     const RC_ctrl_t *gimbal_rc_ctrl;
     const fp32 *gimbal_INT_angle_point;
