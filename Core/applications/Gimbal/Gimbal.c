@@ -136,8 +136,10 @@ static void gimbal_feedback_update(gimbal_control_t *feedback_update,float *add_
     {
       //更新电机目标机械角度
 			if(feedback_update->vision_ctrl_mode == 0){
-				feedback_update->gimbal_pitch_motor.absolute_angle_set=temp_data.pitch+feedback_update->gimbal_pitch_motor.absolute_angle;
-				feedback_update->gimbal_yaw_motor.absolute_angle_set=temp_data.yaw+feedback_update->gimbal_yaw_motor.absolute_angle;
+				//feedback_update->gimbal_pitch_motor.absolute_angle_set= temp_data.pitch+  	feedback_update->gimbal_pitch_motor.absolute_angle;
+				//feedback_update->gimbal_yaw_motor.absolute_angle_set=   temp_data.yaw+				feedback_update->gimbal_yaw_motor.absolute_angle;
+				feedback_update->gimbal_pitch_motor.absolute_angle_set= temp_data.pitch+  	feedback_update->gimbal_pitch_motor.absolute_angle;
+				feedback_update->gimbal_yaw_motor.absolute_angle_set=   temp_data.yaw+				feedback_update->gimbal_yaw_motor.absolute_angle;
 			}else{
 				feedback_update->gimbal_pitch_motor.motor_speed_set = temp_data.pitch;
 				feedback_update->gimbal_yaw_motor.motor_speed_set = temp_data.yaw;

@@ -33,6 +33,7 @@
    float aim_z;
    uint16_t game_time;  // (s) game time [0, 450]
    uint32_t timestamp;  // (ms) board time
+	 uint32_t last_pc_timestamp;
    uint16_t checksum ;
  } __attribute__((packed)) send_packet_t;
 
@@ -51,7 +52,7 @@ typedef struct
   float yaw_diff;
   float pitch_diff;
   int fire_advice;
-
+	uint32_t last_pc_timestamp;
   uint16_t checksum ;
 } __attribute__((packed)) receive_packet_t;
 

@@ -42,6 +42,7 @@ void VPC_Init(void)
     /* Block until a valid packet arrives, then send an updated response */
     VPC_Receive();
 		extern gimbal_control_t gimbal_control;
+		aim_packet_to_nuc.last_pc_timestamp = aim_packet_from_nuc.last_pc_timestamp;
 		aim_packet_to_nuc.timestamp = HAL_GetTick();
 		aim_packet_to_nuc.aim_x = motor_data[MOTOR_YAW].speed;
 
