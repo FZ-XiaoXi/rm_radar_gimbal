@@ -94,8 +94,8 @@ void UnPack_Data_ROS2(uint8_t *receive_buf,receive_packet_t *receive_packet,uint
 	  w_expected=Get_CRC16_Check_Sum(receive_buf,Len-2,0xFFFF);
     if((w_expected & 0xff) == receive_buf[Len - 2] && ((w_expected >> 8) & 0xff) == receive_buf[Len - 1])
     {
-			
       memcpy(receive_packet,receive_buf, Len);
+      s_last_pc_timestamp_us = receive_packet->pc_timestamp_us;
       /* notify VPC task that a validated packet is ready */
 			
       if (g_xSemVPC != NULL) {
@@ -166,6 +166,7 @@ void Send_Packet_Init(send_packet_t *send_packet)
     //  send_packet-> roll = imu_list[0]->angle[1];
      send_packet-> pitch = imu_Angle.Pitch;
      send_packet-> yaw = imu_Angle.Yaw;
+     
 }
 
 void setPID(uint8_t* buf){

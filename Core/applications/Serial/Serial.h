@@ -33,7 +33,7 @@
    float aim_z;
    uint16_t game_time;  // (s) game time [0, 450]
    uint32_t timestamp;  // (ms) board time
-	 uint32_t last_pc_timestamp;
+	 uint32_t last_pc_timestamp_us;
    uint16_t checksum ;
  } __attribute__((packed)) send_packet_t;
 
@@ -46,13 +46,13 @@ typedef struct
   uint8_t armors_num : 3;  // 2-balance 3-outpost 4-normal
 
   //o-auto
-  float yaw;
-  float pitch;
+  float target_yaw;
+  float target_pitch;
 
-  float yaw_diff;
-  float pitch_diff;
+  float target_v_yaw;
+  float target_v_pitch;
   int fire_advice;
-	uint32_t last_pc_timestamp;
+	uint32_t pc_timestamp_us;
   uint16_t checksum ;
 } __attribute__((packed)) receive_packet_t;
 
