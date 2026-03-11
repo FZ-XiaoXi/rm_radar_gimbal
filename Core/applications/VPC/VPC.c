@@ -19,7 +19,7 @@
   /* Serial already copied validated frame into aim_packet_from_nuc in UnPack_Data_ROS2 */
   /* Copy relevant fields into outgoing packet so we reply with updated data */
   aim_packet_to_nuc.yaw = INS.Yaw;
-  aim_packet_to_nuc.pitch = INS.Pitch;
+  aim_packet_to_nuc.pitch = INS.Roll;
  }
  
 

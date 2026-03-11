@@ -56,11 +56,8 @@ void Gimbal_task(void const * argument){
        }
        else if (gimbal_control.Ctl_mode==0)//视觉自动模式//todo当锁定无人机发射激光
        {
-				  if(gimbal_control.vision_ctrl_mode ==0){
-						temp_data.yaw=msp(aim_packet_from_nuc.yaw,-pi,pi,-180,180);
-						temp_data.pitch=msp(aim_packet_from_nuc.pitch,-pi,pi,-180,180);
-						aim_packet_from_nuc.yaw=0;
-						aim_packet_from_nuc.pitch=0;
+						temp_data.yaw=msp(aim_packet_from_nuc.target_yaw,-pi,pi,-180,180);
+						temp_data.pitch=msp(aim_packet_from_nuc.target_pitch,-pi,pi,-180,180);
 	//          if(gimbal_control.gimbal_rc_ctrl->rc.s[0]==1)
 	//						HAL_GPIO_WritePin(laser_GPIO_Port, laser_Pin, GPIO_PIN_SET);
 	//					else
@@ -69,16 +66,6 @@ void Gimbal_task(void const * argument){
 						gimbal_detact_calibration(&gimbal_control);
 						gimbal_feedback_update(&gimbal_control,&temp_data.yaw,&temp_data.pitch,gimbal_control.Ctl_mode);
 						gimbal_set_tar(&gimbal_control,&temp_data.yaw,&temp_data.pitch);
-					}else{
-						temp_data.yaw=aim_packet_from_nuc.yaw;
-						temp_data.pitch=aim_packet_from_nuc.pitch;
-						//aim_packet_from_nuc.yaw=0;
-						//aim_packet_from_nuc.pitch=0;
-						gimbal_detact_calibration(&gimbal_control);
-						gimbal_feedback_update(&gimbal_control,&temp_data.yaw,&temp_data.pitch,gimbal_control.Ctl_mode);
-						
-						gimbal_set_tar(&gimbal_control,&temp_data.yaw,&temp_data.pitch);
-					}
           Motor_Calc(&gimbal_control);
           vTaskDelay(pdMS_TO_TICKS(1));
        }
@@ -135,15 +122,10 @@ static void gimbal_feedback_update(gimbal_control_t *feedback_update,float *add_
     else if(Crtl_mode==0)//更新视觉控制实时角度
     {
       //更新电机目标机械角度
-			if(feedback_update->vision_ctrl_mode == 0){
 				//feedback_update->gimbal_pitch_motor.absolute_angle_set= temp_data.pitch+  	feedback_update->gimbal_pitch_motor.absolute_angle;
 				//feedback_update->gimbal_yaw_motor.absolute_angle_set=   temp_data.yaw+				feedback_update->gimbal_yaw_motor.absolute_angle;
-				feedback_update->gimbal_pitch_motor.absolute_angle_set= temp_data.pitch+  	feedback_update->gimbal_pitch_motor.absolute_angle;
-				feedback_update->gimbal_yaw_motor.absolute_angle_set=   temp_data.yaw+				feedback_update->gimbal_yaw_motor.absolute_angle;
-			}else{
-				feedback_update->gimbal_pitch_motor.motor_speed_set = temp_data.pitch;
-				feedback_update->gimbal_yaw_motor.motor_speed_set = temp_data.yaw;
-			}
+				feedback_update->gimbal_pitch_motor.absolute_angle_set= temp_data.pitch;
+				feedback_update->gimbal_yaw_motor.absolute_angle_set=   temp_data.yaw;
 
       xSemaphoreGive(g_xSemVPC);
     } 
