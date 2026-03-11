@@ -41,7 +41,8 @@ extern uint8_t   GIMBAL_OFFSET_FLAG; //标志位组
 //云台初始化回中值，允许的误差,并且在误差范围内停止一段时间以及最大时间6s后解除初始化状态，
 #define GIMBAL_INIT_ANGLE_ERROR     3
 #define GIMBAL_INIT_STOP_TIME       10000
-#define GIMBAL_INIT_TIME            10
+#define GIMBAL_INIT_START_TIME      5
+#define GIMBAL_INIT_TIME            15
 #define GIMBAL_CALI_REDUNDANT_ANGLE 0.1f
 
 

@@ -255,6 +255,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>\\platform\../Core/applications/algorithm/INS.c\INS.Roll</ItemText>
         </Ww>
+        <Ww>
+          <count>20</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>motor_ready</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
@@ -267,11 +272,6 @@
           <WinNumber>2</WinNumber>
           <ItemText>yaw,0x0A</ItemText>
         </Ww>
-        <Ww>
-          <count>2</count>
-          <WinNumber>2</WinNumber>
-          <ItemText>aim_packet_from_nuc.yaw</ItemText>
-        </Ww>
       </WatchWindow2>
       <Tracepoint>
         <THDelay>0</THDelay>
@@ -279,7 +279,7 @@
       <DebugFlag>
         <trace>0</trace>
         <periodic>1</periodic>
-        <aLwin>1</aLwin>
+        <aLwin>0</aLwin>
         <aCover>0</aCover>
         <aSer1>0</aSer1>
         <aSer2>0</aSer2>
@@ -747,7 +747,7 @@
 
   <Group>
     <GroupName>Drivers/CMSIS</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -767,7 +767,7 @@
 
   <Group>
     <GroupName>Instance</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>

@@ -145,7 +145,8 @@ void gimbal_detact_calibration(gimbal_control_t *gimbal_motort){
 				gimbal_motort->gimbal_yaw_motor.motor_gyro=motor_data[0].angle;
         MotorSetTar(&motor_ready[0],YAW_OFFSET_ECD, ABS);  
         MotorSetTar(&motor_ready[1], PITCH_OFFSET_ECD, ABS);
-				Motor_return(gimbal_motort);
+		
+	   Motor_return(gimbal_motort);
        int_time++;
        if((fabs(gimbal_motort->gimbal_yaw_motor.motor_gyro-YAW_OFFSET_ECD)<GIMBAL_INIT_ANGLE_ERROR)||
 				(fabs(gimbal_motort->gimbal_pitch_motor.motor_gyro-PITCH_OFFSET_ECD))<GIMBAL_INIT_ANGLE_ERROR){
@@ -183,73 +184,33 @@ void gimbal_set_tar(gimbal_control_t *gimbal_motort,float *add_yaw,float *add_pi
         return;
     }
 	 //pitch
-
-    //根据当前输入值的正负来判断处于左值还是右值，从而决定目标值,并且加上一个死区，防止频繁切换
-    if(*add_pitch<0)//-40
-			{
-        if(gimbal_motort->gimbal_pitch_motor.absolute_angle<=(PITCH_Limit_Hight+4))//为边界粗略写的死区，下同
-					{
-            MotorSetTar(&motor_ready[MOTOR_PITCH],PITCH_Limit_Hight,ABS);
-          }
-				else
-					{
-            MotorSetTar(&motor_ready[MOTOR_PITCH],gimbal_motort->gimbal_pitch_motor.absolute_angle_set,ABS);
-          }
-      }
-		else if(*add_pitch>0)//25
-			{
-        if(gimbal_motort->gimbal_pitch_motor.absolute_angle>=(PITCH_Limit_Low-1.5))
-					{
-            MotorSetTar(&motor_ready[MOTOR_PITCH],PITCH_Limit_Low,ABS);
-          }
-					else
-					{
-				    MotorSetTar(&motor_ready[MOTOR_PITCH],gimbal_motort->gimbal_pitch_motor.absolute_angle_set,ABS);
-          }
-      }   
-		else
-			{
- 				MotorSetTar(&motor_ready[MOTOR_PITCH],gimbal_motort->gimbal_pitch_motor.absolute_angle_set,ABS);
-      }
+    if(*add_pitch<=PITCH_Limit_Hight)
+	{
+		MotorSetTar(&motor_ready[MOTOR_PITCH],PITCH_Limit_Hight,ABS);
+    }
+	else if(*add_pitch>=PITCH_Limit_Low)
+	{
+		MotorSetTar(&motor_ready[MOTOR_PITCH],PITCH_Limit_Low,ABS);
+	}   
+	else
+	{
+		MotorSetTar(&motor_ready[MOTOR_PITCH],gimbal_motort->gimbal_pitch_motor.absolute_angle_set,ABS);
+    }
 
 
     //yaw
-    if(*add_yaw<0)
-			{
-        if(*add_yaw<=YAW_Limit_Low)//-90
-					{
-           if(gimbal_motort->gimbal_yaw_motor.absolute_angle<=(YAW_Limit_Low+3))
-						 {
-               MotorSetTar(&motor_ready[MOTOR_YAW],YAW_Limit_Low,ABS);
-             }
-          }
-					else
-					{
-               MotorSetTar(&motor_ready[MOTOR_YAW],gimbal_motort->gimbal_yaw_motor.absolute_angle_set,ABS);
-          }
-      }
-		 else if(*add_yaw>0)
-			{
-        if(*add_yaw>=YAW_Limit_Hight)//90
-					{
-              if(gimbal_motort->gimbal_yaw_motor.absolute_angle>=(YAW_Limit_Hight-3))
-								{
-                  MotorSetTar(&motor_ready[MOTOR_YAW],YAW_Limit_Hight,ABS);
-                }
-							else
-								{
-									MotorSetTar(&motor_ready[MOTOR_YAW],gimbal_motort->gimbal_yaw_motor.absolute_angle_set,ABS);
-								}
-				  }
-			  else
-					{
-				    MotorSetTar(&motor_ready[MOTOR_YAW],gimbal_motort->gimbal_yaw_motor.absolute_angle_set,ABS);
-          }
-       }
-		else
-			{
-				MotorSetTar(&motor_ready[MOTOR_YAW],gimbal_motort->gimbal_yaw_motor.absolute_angle_set,ABS);
-			}
+    if(*add_yaw<=YAW_Limit_Low)
+	{
+		MotorSetTar(&motor_ready[MOTOR_YAW],YAW_Limit_Low,ABS);
+    }
+    else if(*add_yaw >= YAW_Limit_Hight)
+	{
+		MotorSetTar(&motor_ready[MOTOR_YAW],YAW_Limit_Hight,ABS);
+    }
+	else
+	{
+		MotorSetTar(&motor_ready[MOTOR_YAW],gimbal_motort->gimbal_yaw_motor.absolute_angle_set,ABS);
+	}
 
 
 }
