@@ -26,6 +26,28 @@
 #define MOTOR_ECD_TO_RAD 0.000766990394f //      2*  PI  /8192
 #endif
 
+//编码器角度对齐默认值（Yaw 左转为正，Pitch 下转为正）
+#define GIMBAL_YAW_DIR_DEFAULT   1
+#define GIMBAL_PITCH_DIR_DEFAULT 1
+#define GIMBAL_YAW_OFFSET_DEG_DEFAULT   0.0f
+#define GIMBAL_PITCH_OFFSET_DEG_DEFAULT 0.0f
+
+//角度来源选择
+typedef enum
+{
+  GIMBAL_ANGLE_SOURCE_IMU = 0,
+  GIMBAL_ANGLE_SOURCE_ENCODER = 1,
+} gimbal_angle_source_e;
+
+//编码器角度修正
+typedef struct
+{
+  fp32 yaw_offset_deg;   //机械零点与归中零点的偏移（度）
+  fp32 pitch_offset_deg; //机械零点与归中零点的偏移（度）
+  int8_t yaw_dir;        //方向修正：1 正向，-1 反向
+  int8_t pitch_dir;      //方向修正：1 正向，-1 反向
+} gimbal_encoder_align_t;
+
 //对 GIMBAL_OFFSET_FLAG 的位的操作
 #define GIMBAL_FLAG_SET(FLAG)   GIMBAL_OFFSET_FLAG|=FLAG                //标志位置1
 #define GIMBAL_FLAG_RESET(FLAG) GIMBAL_OFFSET_FLAG&=~FLAG               //标志位值0
@@ -124,6 +146,8 @@ typedef struct
 		int vision_ctrl_mode;
 		
     uint8_t Ctl_mode;
+    gimbal_angle_source_e angle_source;
+    gimbal_encoder_align_t encoder_align;
     const RC_ctrl_t *gimbal_rc_ctrl;
     const fp32 *gimbal_INT_angle_point;
     const fp32 *gimbal_INT_gyro_point;

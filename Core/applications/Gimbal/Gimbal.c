@@ -30,7 +30,12 @@ static tempdata_t temp_data;
 
 
 void Gimbal_task(void const * argument){
-	gimbal_control.vision_ctrl_mode = 0;
+  gimbal_control.vision_ctrl_mode = 0;
+  gimbal_control.angle_source = GIMBAL_ANGLE_SOURCE_ENCODER;
+  gimbal_control.encoder_align.yaw_dir = GIMBAL_YAW_DIR_DEFAULT;
+  gimbal_control.encoder_align.pitch_dir = GIMBAL_PITCH_DIR_DEFAULT;
+  gimbal_control.encoder_align.yaw_offset_deg = GIMBAL_YAW_OFFSET_DEG_DEFAULT;
+  gimbal_control.encoder_align.pitch_offset_deg = GIMBAL_PITCH_OFFSET_DEG_DEFAULT;
 	HAL_GPIO_WritePin(laser_GPIO_Port, laser_Pin, GPIO_PIN_SET);	//TODO TEST
 	g_xSemTicks=xSemaphoreCreateBinary( );
     //等待陀螺仪任务更新陀螺仪数据
@@ -94,6 +99,21 @@ static fp32 motor_ecd_to_angle_change(uint16_t ecd, uint16_t offset_ecd)
     return relative_ecd;
 }
 
+static float gimbal_ecd_to_deg(uint16_t ecd, uint16_t center_ecd, int8_t dir, float offset_deg)
+{
+  int32_t relative_ecd = (int32_t)ecd - (int32_t)center_ecd;
+  if (relative_ecd > HALF_ECD_RANGE)
+  {
+    relative_ecd -= (ECD_RANGE + 1);
+  }
+  else if (relative_ecd < -HALF_ECD_RANGE)
+  {
+    relative_ecd += (ECD_RANGE + 1);
+  }
+
+  return ((float)relative_ecd * 360.0f / (float)(ECD_RANGE + 1)) * (float)dir + offset_deg;
+}
+
 //云台更新数据
 static void gimbal_feedback_update(gimbal_control_t *feedback_update,float *add_yaw,float *add_pitch,uint8_t Crtl_mode){
 
@@ -103,9 +123,25 @@ static void gimbal_feedback_update(gimbal_control_t *feedback_update,float *add_
     feedback_update->gimbal_yaw_motor.motor_gyro=motor_data[0].angle;
 
     //更新姿态角实时角度
+    if (feedback_update->angle_source == GIMBAL_ANGLE_SOURCE_ENCODER)
+    {
+      feedback_update->gimbal_pitch_motor.absolute_angle = gimbal_ecd_to_deg(
+        motor_data[MOTOR_PITCH].angle,
+        PITCH_OFFSET_ECD,
+        feedback_update->encoder_align.pitch_dir,
+        feedback_update->encoder_align.pitch_offset_deg);
 
-	  feedback_update->gimbal_pitch_motor.absolute_angle=INS.Roll;//这里算法解算出来的Roll对应实际小云台的俯仰角Pitch
-    feedback_update->gimbal_yaw_motor.absolute_angle=INS.Yaw;
+      feedback_update->gimbal_yaw_motor.absolute_angle = gimbal_ecd_to_deg(
+        motor_data[MOTOR_YAW].angle,
+        YAW_OFFSET_ECD,
+        feedback_update->encoder_align.yaw_dir,
+        feedback_update->encoder_align.yaw_offset_deg);
+    }
+    else
+    {
+  	    feedback_update->gimbal_pitch_motor.absolute_angle = INS.Roll; // Roll 对应 Pitch
+      feedback_update->gimbal_yaw_motor.absolute_angle = INS.Yaw;
+    }
 
     if(Crtl_mode==1)//更新遥控器实时角度
 	  {

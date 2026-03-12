@@ -18,8 +18,17 @@
 
   /* Serial already copied validated frame into aim_packet_from_nuc in UnPack_Data_ROS2 */
   /* Copy relevant fields into outgoing packet so we reply with updated data */
-  aim_packet_to_nuc.yaw = INS.Yaw;
-  aim_packet_to_nuc.pitch = INS.Roll;
+  extern gimbal_control_t gimbal_control;
+  if (gimbal_control.angle_source == GIMBAL_ANGLE_SOURCE_ENCODER)
+  {
+    aim_packet_to_nuc.yaw = gimbal_control.gimbal_yaw_motor.absolute_angle;
+    aim_packet_to_nuc.pitch = gimbal_control.gimbal_pitch_motor.absolute_angle;
+  }
+  else
+  {
+    aim_packet_to_nuc.yaw = INS.Yaw;
+    aim_packet_to_nuc.pitch = INS.Roll;
+  }
  }
  
 
