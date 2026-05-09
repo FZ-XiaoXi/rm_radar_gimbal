@@ -129,15 +129,15 @@ float pid_calc_raw_return(pid_struct_t *pid, float tar, float real)//PID运算�
 void gimbal_PID_init()//角度环和速度环的PID初始化,只是初测出来的数据，具体还需要测试
 {
 	//YAW轴初始化
-	pid_init(&gimbal_yaw_speed_pid,      320,    1.5,   0.1, 1000, 2500);//P=30,I=0,D=0
-	pid_init(&gimbal_yaw_angle_pid,      350,    1.7,   0.1, 1000, 25);//P=500,I=0,D=1
+	pid_init(&gimbal_yaw_speed_pid,      120,    2,   0.2, 1000, 2500);//P=30,I=0,D=0
+	pid_init(&gimbal_yaw_angle_pid,      460,    6,   0.1, 1000, 25);//P=500,I=0,D=1
   pid_init(&gimbal_yaw_speed_pid_return, 200,    0.06,   0.003, 1000, 3000);//P=30,I=0,D=0`
   pid_init(&gimbal_yaw_angle_pid_return, 50 ,   0,   0.005, 100, 1000);//P=500,I=0,D=1
 	//PITCH轴初始化
 	//pid_init(&gimbal_pitch_speed_pid,150,0,0, 1000, 1000);//P=30,I=0,D=0
 	//pid_init(&gimbal_pitch_angle_pid,0,0,0,100, 1000);//P=500,I=0,D=1
-	pid_init(&gimbal_pitch_speed_pid,      160,     4, 0.1, 1000, 2500);//P=30,I=0,D=0
-	pid_init(&gimbal_pitch_angle_pid,      400,     6, 0.1, 1000, 25);//P=500,I=0,D=1//1800,0.1,1
+	pid_init(&gimbal_pitch_speed_pid,      120,     3, 0.1, 1000, 2500);//P=30,I=0,D=0
+	pid_init(&gimbal_pitch_angle_pid,      330,     8, 0.1, 1300, 25);//P=500,I=0,D=1//1800,0.1,1
   pid_init(&gimbal_pitch_speed_pid_return, 16,     0.005, 0, 1000, 3000);//P=30,I=0,D=0`
   pid_init(&gimbal_pitch_angle_pid_return, 300,     0, 0.01, 100, 1000);//P=500,I=0,D=1
 }
